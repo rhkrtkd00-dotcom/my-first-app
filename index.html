@@ -30,8 +30,15 @@
     .seat::before{content:attr(data-number);position:absolute;left:11px;top:9px;color:#64748b;font-size:15px;font-weight:900}.seat strong{font-size:clamp(21px,2.1vw,32px);font-weight:900;word-break:keep-all}.seat.empty{border-style:dashed;box-shadow:none;color:#94a3b8;background:#f8fafc}.seat.locked{outline:3px solid #fbbf24}.lock{position:absolute;right:9px;top:7px;border:0;background:transparent;padding:5px;font-size:21px;opacity:.55}.seat:hover .lock,.seat.locked .lock{opacity:1}
     .empty-state{min-height:540px;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:20px;line-height:1.7;border:3px dashed #cbd5e1;border-radius:22px;padding:36px}.empty-state b{display:block;color:#334155;font-size:32px;margin-bottom:12px}
     .notice{margin-top:22px;padding:17px 20px;border-radius:15px;background:#f8fafc;color:var(--muted);font-size:17px;font-weight:700;line-height:1.65}.toast{position:fixed;left:50%;bottom:25px;transform:translate(-50%,20px);padding:12px 18px;border-radius:999px;background:#172033;color:#fff;font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:10}.toast.show{opacity:1;transform:translate(-50%,0)}
+    .guestbook-panel{margin-top:28px;padding:clamp(24px,3vw,38px)}
+    .guestbook-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:20px}.guestbook-head h2{margin:0;font-size:clamp(28px,3vw,40px)}.guestbook-head p{margin:0;color:var(--muted);font-size:17px;font-weight:700}
+    .guestbook-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px}.guestbook-form input{width:100%;height:64px;border:2px solid var(--line);border-radius:15px;padding:0 18px;font-size:20px;outline:none}.guestbook-form input:focus{border-color:#818cf8;box-shadow:0 0 0 4px #eef2ff}.guestbook-form .btn{min-width:140px}
+    .guestbook-meta{display:flex;justify-content:space-between;gap:12px;margin:10px 2px 20px;color:var(--muted);font-size:15px;font-weight:700}.guest-status{color:#4338ca}
+    .guestbook-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}.guest-entry{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 19px;border:1px solid var(--line);border-radius:15px;background:#f8fafc}.guest-entry span{font-size:19px;font-weight:800;line-height:1.5;word-break:break-word}.guest-entry time{flex:none;color:var(--muted);font-size:14px;font-weight:700}.guest-empty{padding:30px;border:2px dashed var(--line);border-radius:15px;text-align:center;color:var(--muted);font-size:18px;font-weight:700}
+    .guestbook-note{margin:18px 0 0;color:var(--muted);font-size:15px;line-height:1.6}
     @media(max-width:850px){header{align-items:flex-start;flex-direction:column}.privacy{white-space:normal}.layout{grid-template-columns:1fr}.controls{position:static}.board-panel{min-height:auto}.seats{min-width:520px}.seat{min-height:96px}}
     @media(max-width:520px){.app{padding:12px}.panel{border-radius:18px}.controls,.board-panel{padding:18px}.grid2{grid-template-columns:1fr}.actions{grid-template-columns:1fr}.primary{grid-column:auto}.brand h1{font-size:38px}.brand p{font-size:17px}.teacher{margin-bottom:20px;font-size:20px}.seats{min-width:410px;gap:8px}.seat{min-height:82px;padding:10px 6px}.seat strong{font-size:18px}.btn{font-size:18px;min-height:58px}}
+    @media(max-width:600px){.guestbook-head{align-items:flex-start;flex-direction:column}.guestbook-form{grid-template-columns:1fr}.guestbook-form .btn{width:100%}.guest-entry{align-items:flex-start;flex-direction:column}.guest-entry time{font-size:13px}}
     @media print{body{background:#fff}.app{padding:0}.controls,header .privacy,.notice,.lock{display:none!important}.layout{display:block}.panel{box-shadow:none;border:0}.board-panel{padding:0}.seat{box-shadow:none;break-inside:avoid}.teacher{box-shadow:none}.board-head .status{display:none}}
   </style>
 </head>
@@ -75,6 +82,19 @@
         <div class="notice">개인정보 보호: 입력한 이름과 자리표는 서버나 다른 사이트로 전송되지 않으며, 새로고침하면 사라집니다.</div>
       </section>
     </div>
+    <section class="panel guestbook-panel" aria-labelledby="guestbookTitle">
+      <div class="guestbook-head">
+        <h2 id="guestbookTitle">한 줄 방명록</h2>
+        <p>이름과 연락처 없이 한 줄만 남겨 주세요.</p>
+      </div>
+      <form id="guestbookForm" class="guestbook-form">
+        <input id="guestMessage" type="text" maxlength="200" autocomplete="off" aria-label="방명록 한 줄" placeholder="반가운 한마디를 입력해 주세요" required>
+        <button id="guestSubmit" class="btn primary" type="submit">글 남기기</button>
+      </form>
+      <div class="guestbook-meta"><span id="guestCount">0 / 200자</span><span id="guestStatus" class="guest-status" role="status"></span></div>
+      <ul id="guestbookList" class="guestbook-list"><li class="guest-empty">방명록을 불러오는 중이에요.</li></ul>
+      <p class="guestbook-note">남긴 글은 이 방명록에 공개됩니다. 개인정보는 입력하지 마세요. 글은 작성만 가능하며 수정하거나 삭제할 수 없습니다.</p>
+    </section>
   </main>
   <div class="toast" id="toast" role="status"></div>
   <script>
@@ -83,6 +103,9 @@
       const $ = (id) => document.getElementById(id);
       const colsEl=$('cols'), rowsEl=$('rows'), namesEl=$('names'), board=$('board');
       let seats=[], locked=new Set();
+      const SUPABASE_URL="https://gsprzpzncofmhdnnyfko.supabase.co";
+      const SUPABASE_PUBLISHABLE_KEY="sb_publishable_PwVr8FLyT9JPW9qSGUcPkQ_o9-jRLe0";
+      const guestMessage=$('guestMessage'),guestList=$('guestbookList'),guestStatus=$('guestStatus'),guestSubmit=$('guestSubmit');
       const clamp=(n,min,max)=>Math.min(max,Math.max(min,Number(n)||min));
       const names=()=>namesEl.value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
       function toast(message){const t=$('toast');t.textContent=message;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
@@ -93,7 +116,13 @@
       function make(){const c=clamp(colsEl.value,1,12),r=clamp(rowsEl.value,1,12),list=names(),total=c*r;colsEl.value=c;rowsEl.value=r;if(!list.length){toast('이름을 한 명 이상 입력해 주세요');namesEl.focus();return}if(list.length>total){toast(`자리가 ${list.length-total}개 부족해요`);return}locked.clear();seats=[...shuffle(list),...Array(total-list.length).fill('')];render();toast('새 자리표를 만들었어요')}
       function reshuffle(){if(!seats.length){make();return}const total=clamp(colsEl.value,1,12)*clamp(rowsEl.value,1,12);if(total!==seats.length){locked.clear();make();return}const movable=[];seats.forEach((name,i)=>{if(!locked.has(i)&&name)movable.push(name)});const mixed=shuffle(movable);let p=0;seats=seats.map((name,i)=>locked.has(i)?name:(name?mixed[p++]:''));render();toast(locked.size?'잠근 자리를 빼고 섞었어요':'자리를 다시 섞었어요')}
       function clearAll(){namesEl.value='';seats=[];locked.clear();board.className='empty-state';board.innerHTML='<div><b>아직 자리표가 없어요</b>왼쪽에 이름을 입력한 뒤<br>‘무작위로 자리 배치’를 눌러 주세요.</div>';$('status').textContent='설정을 입력해 주세요';updateCounts();namesEl.focus();toast('입력 내용을 모두 지웠어요')}
+      const apiHeaders=()=>({apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:'Bearer '+SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'});
+      function setGuestStatus(message,isError=false){guestStatus.textContent=message;guestStatus.style.color=isError?'#dc2626':'#4338ca'}
+      function renderGuestbook(entries){guestList.innerHTML='';if(!entries.length){const empty=document.createElement('li');empty.className='guest-empty';empty.textContent='첫 번째 한 줄을 남겨 보세요.';guestList.appendChild(empty);return}entries.forEach(entry=>{const item=document.createElement('li');item.className='guest-entry';const message=document.createElement('span');message.textContent=entry.message;const time=document.createElement('time');time.dateTime=entry.created_at;time.textContent=new Intl.DateTimeFormat('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(entry.created_at));item.append(message,time);guestList.appendChild(item)})}
+      async function loadGuestbook(){try{const response=await fetch(SUPABASE_URL+'/rest/v1/guestbook_entries?select=id,message,created_at&order=created_at.desc&limit=30',{headers:apiHeaders()});if(!response.ok)throw new Error('load');renderGuestbook(await response.json());setGuestStatus('')}catch(error){guestList.innerHTML='<li class="guest-empty">방명록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</li>';setGuestStatus('연결을 확인해 주세요',true)}}
+      async function submitGuestbook(event){event.preventDefault();const message=guestMessage.value.trim();if(!message){setGuestStatus('한 줄을 입력해 주세요',true);guestMessage.focus();return}guestSubmit.disabled=true;setGuestStatus('저장 중…');try{const response=await fetch(SUPABASE_URL+'/rest/v1/guestbook_entries',{method:'POST',headers:{...apiHeaders(),Prefer:'return=minimal'},body:JSON.stringify({message})});if(!response.ok)throw new Error('save');guestMessage.value='';$('guestCount').textContent='0 / 200자';setGuestStatus('저장했어요');await loadGuestbook()}catch(error){setGuestStatus('저장하지 못했어요. 다시 시도해 주세요',true)}finally{guestSubmit.disabled=false}}
       [colsEl,rowsEl,namesEl].forEach(el=>el.addEventListener('input',updateCounts));$('makeBtn').addEventListener('click',make);$('reshuffleBtn').addEventListener('click',reshuffle);$('printBtn').addEventListener('click',()=>window.print());$('clearBtn').addEventListener('click',clearAll);updateCounts();
+      guestMessage.addEventListener('input',()=>{$('guestCount').textContent=`${guestMessage.value.length} / 200자`});$('guestbookForm').addEventListener('submit',submitGuestbook);loadGuestbook();
     })();
   </script>
 </body>
